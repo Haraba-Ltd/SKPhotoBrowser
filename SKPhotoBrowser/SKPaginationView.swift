@@ -14,9 +14,11 @@ class SKPaginationView: UIView {
     var counterLabel: UILabel?
     var prevButton: UIButton?
     var nextButton: UIButton?
+    var cameraButton: UIButton?
+    var gallaryButton: UIButton?
     private var margin: CGFloat = 100
     private var extraMargin: CGFloat = SKMesurement.isPhoneX ? 40 : 0
-    
+    private let widthBtn: CGFloat = 80
     fileprivate weak var browser: SKPhotoBrowser?
     
     required init?(coder aDecoder: NSCoder) {
@@ -47,6 +49,10 @@ class SKPaginationView: UIView {
             } else if let prevButton = prevButton, prevButton.frame.contains(point) {
                 return view
             } else if let nextButton = nextButton, nextButton.frame.contains(point) {
+                return view
+            } else if let cameraButton = cameraButton, cameraButton.frame.contains(point) {
+                return view
+            } else if let gallaryButton = gallaryButton, gallaryButton.frame.contains(point) {
                 return view
             }
             return nil
@@ -79,21 +85,14 @@ class SKPaginationView: UIView {
                        animations: { () -> Void in self.alpha = alpha },
                        completion: nil)
     }
-}
-
-private extension SKPaginationView {
-    func setupApperance() {
-        backgroundColor = .clear
-        clipsToBounds = true
-    }
     
-    func setupCounterLabel() {
-        guard SKPhotoBrowserOptions.displayCounterLabel else { return }
-        
-        let label = UILabel(frame: CGRect(x: 0, y: 0, width: 100, height: 50))
+    public func setupCounterLabel() {
+        let label = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width * 0.55, height: 50))
         label.center = CGPoint(x: frame.width / 2, y: frame.height / 2)
         label.textAlignment = .center
         label.backgroundColor = .clear
+        label.numberOfLines = 4
+        label.clipsToBounds = true
         label.shadowColor = SKToolbarOptions.textShadowColor
         label.shadowOffset = CGSize(width: 0.0, height: 1.0)
         label.font = SKToolbarOptions.font
@@ -105,6 +104,55 @@ private extension SKPaginationView {
                                   .flexibleTopMargin]
         addSubview(label)
         counterLabel = label
+    }
+    
+    public func setupCameraBtn() {
+        let btn = UIButton(frame: CGRect(x: 8, y: 0, width: widthBtn, height: 50))
+        btn.center.y = frame.height/2
+        btn.setTitle("Камера", for: .normal)
+        btn.titleLabel?.textAlignment = .center
+        btn.backgroundColor = .darkGray
+        btn.layer.cornerRadius = 5
+        btn.titleLabel?.font = SKToolbarOptions.font
+        btn.titleLabel?.textColor = SKToolbarOptions.textColor
+        
+        btn.addTarget(browser, action: #selector(SKPhotoBrowser.tapCamera), for: .touchUpInside)
+        
+        btn.translatesAutoresizingMaskIntoConstraints = true
+        btn.autoresizingMask = [.flexibleBottomMargin,
+                                  .flexibleLeftMargin,
+                                  .flexibleRightMargin,
+                                  .flexibleTopMargin]
+        
+        addSubview(btn)
+        cameraButton = btn
+    }
+    
+    public func setupGallaryBtn() {
+        guard SKPhotoBrowserOptions.displayCounterLabel else { return }
+        
+        let btn = UIButton(frame: CGRect(x: frame.maxX - (widthBtn + 8) , y: 0, width: widthBtn, height: 50))
+        btn.center.y = frame.height/2
+        
+        btn.titleLabel?.textAlignment = .center
+        btn.backgroundColor = .darkGray
+        btn.setTitle("Галерея", for: .normal)
+        btn.layer.cornerRadius = 5
+        btn.titleLabel?.font = SKToolbarOptions.font
+        btn.titleLabel?.textColor = SKToolbarOptions.textColor
+        //btn.translatesAutoresizingMaskIntoConstraints = true
+        btn.isUserInteractionEnabled = true
+        btn.addTarget(browser, action: #selector(SKPhotoBrowser.tapGallary), for: .touchUpInside)
+        addSubview(btn)
+        gallaryButton = btn
+    }
+}
+
+//MARK: - Func
+private extension SKPaginationView {
+    func setupApperance() {
+        backgroundColor = .clear
+        clipsToBounds = true
     }
     
     func setupPrevButton() {

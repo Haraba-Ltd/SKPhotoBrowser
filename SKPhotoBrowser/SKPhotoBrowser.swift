@@ -13,23 +13,20 @@ public let SKPHOTO_LOADING_DID_END_NOTIFICATION = "photoLoadingDidEndNotificatio
 // MARK: - SKPhotoBrowser
 open class SKPhotoBrowser: UIViewController {
     // open function
+    open var cameraHandler: (()->Void)?
+    open var galaryHandler: (()->Void)?
+    
     open var currentPageIndex: Int = 0
-    open var initPageIndex: Int = 0
     open var activityItemProvider: UIActivityItemProvider?
     open var photos: [SKPhotoProtocol] = []
-
-    public var toolActionButton: UIBarButtonItem {
-        return toolbar.toolActionButton
-    }
     
     internal lazy var pagingScrollView: SKPagingScrollView = SKPagingScrollView(frame: self.view.frame, browser: self)
     
     // appearance
     fileprivate let bgColor: UIColor = SKPhotoBrowserOptions.backgroundColor
     // animation
-    let animator: SKAnimator = .init()
+    fileprivate let animator: SKAnimator = .init()
     
-    // child component
     fileprivate var actionView: SKActionView!
     fileprivate(set) var paginationView: SKPaginationView!
     var toolbar: SKToolbar!
@@ -58,7 +55,7 @@ open class SKPhotoBrowser: UIViewController {
     
     // strings
     open var cancelTitle = "Cancel"
-
+    
     // MARK: - Initializer
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -74,7 +71,7 @@ open class SKPhotoBrowser: UIViewController {
         self.init(photos: photos, initialPageIndex: 0)
     }
     
-    @available(*, deprecated)
+    @available(*, deprecated: 5.0.0)
     public convenience init(originImage: UIImage, photos: [SKPhotoProtocol], animatedFromView: UIView) {
         self.init(nibName: nil, bundle: nil)
         self.photos = photos
@@ -88,9 +85,12 @@ open class SKPhotoBrowser: UIViewController {
         self.photos = photos
         self.photos.forEach { $0.checkCache() }
         self.currentPageIndex = min(initialPageIndex, photos.count - 1)
-        self.initPageIndex = self.currentPageIndex
         animator.senderOriginImage = photos[currentPageIndex].underlyingImage
         animator.senderViewForAnimation = photos[currentPageIndex] as? UIView
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func setup() {
@@ -244,7 +244,7 @@ open class SKPhotoBrowser: UIViewController {
         }
         
         if let activityItemProvider = activityItemProvider {
-            activityItems.append(activityItemProvider.item as AnyObject)
+            activityItems.append(activityItemProvider)
         }
         
         activityViewController = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
@@ -289,7 +289,6 @@ public extension SKPhotoBrowser {
             }
             paginationView.update(currentPageIndex)
         }
-        self.initPageIndex = currentPageIndex
     }
     
     func jumpToPageAtIndex(_ index: Int) {
@@ -315,6 +314,20 @@ public extension SKPhotoBrowser {
     
     @objc func gotoNextPage() {
         jumpToPageAtIndex(currentPageIndex + 1)
+    }
+    
+    @objc
+    func tapGallary() {
+        print(#function)
+        determineAndClose()
+        galaryHandler?()
+    }
+    
+    @objc
+    func tapCamera() {
+        print(#function)
+        determineAndClose()
+        cameraHandler?()
     }
     
     func cancelControlHiding() {
@@ -362,6 +375,17 @@ public extension SKPhotoBrowser {
     func insertPhotos(photos: [SKPhotoProtocol], at index: Int) {
         self.photos.insert(contentsOf: photos, at: index)
         self.reloadData()
+    }
+    
+    func setTitle(_ title: String) {
+        paginationView.backgroundColor = .black
+        if paginationView.counterLabel == nil {
+            SKPhotoBrowserOptions.displayCounterLabel = true
+            paginationView.setupCounterLabel()
+        }
+        paginationView.setupGallaryBtn()
+        paginationView.setupCameraBtn()
+        paginationView.counterLabel?.text = title
     }
 }
 
@@ -591,7 +615,7 @@ private extension SKPhotoBrowser {
         // action view animation
         actionView.animate(hidden: hidden)
         
-        if !hidden && !permanent {
+        if !permanent {
             hideControlsAfterDelay()
         }
         setNeedsStatusBarAppearanceUpdate()
