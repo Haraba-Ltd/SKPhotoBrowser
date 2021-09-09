@@ -6,7 +6,7 @@
 Simple PhotoBrowser/Viewer inspired by facebook, twitter photo browsers written by swift
 </H4>
 
-<p align="center">
+<p align="center"> 
 <a href="https://developer.apple.com/swift">
 <img alt="Swift5" src="https://img.shields.io/badge/language-swift5.4-orange.svg?style=flat" />
 </a>
